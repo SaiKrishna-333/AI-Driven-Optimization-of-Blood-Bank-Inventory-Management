@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Loan Assistant Chatbot</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background: linear-gradient(to bottom, #001f3f, #0074d9);
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      #chatbot-container {
+        width: 420px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      #chat-header {
+        background: #001f3f;
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 22px;
+        font-weight: bold;
+      }
+      #chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+      }
+      .message {
+        padding: 10px;
+        margin: 5px;
+        border-radius: 8px;
+        max-width: 80%;
+        font-size: 14px;
+      }
+      .user-message {
+        align-self: flex-end;
+        background: #0074d9;
+        color: white;
+      }
+      .bot-message {
+        align-self: flex-start;
+        background: #f0f8ff;
+      }
+      #chat-input {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ddd;
+        background: #f1f1f1;
+      }
+      #message-input {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        outline: none;
+        font-size: 14px;
+      }
+      #mic-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 22px;
+        color: #001f3f;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chatbot-container">
+      <div id="chat-header">Loan Assistant</div>
+      <div id="chat-messages"></div>
+      <div id="chat-input">
+        <input
+          type="text"
+          id="message-input"
+          placeholder="Ask about loans..."
+        />
+        <button id="mic-btn"><i class="fas fa-microphone"></i></button>
+      </div>
+    </div>
+
+    <script>
+      class LoanChatbot {
+        constructor() {
+          this.chatMessages = document.getElementById("chat-messages");
+          this.messageInput = document.getElementById("message-input");
+          this.micBtn = document.getElementById("mic-btn");
+          this.state = "waiting_for_choice";
+          this.setupSpeechRecognition();
+          document
+            .getElementById("message-input")
+            .addEventListener("keypress", (e) => {
+              if (e.key === "Enter") this.sendMessage();
+            });
+          this.micBtn.addEventListener("click", () => this.startVoiceInput());
+          this.initChat();
+        }
+
+        setupSpeechRecognition() {
+          const SpeechRecognition =
+            window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (SpeechRecognition) {
+            this.recognition = new SpeechRecognition();
+            this.recognition.lang = "en";
+            this.recognition.continuous = false;
+            this.recognition.interimResults = false;
+            this.recognition.onresult = (event) => {
+              const transcript = event.results[0][0].transcript;
+              this.sendMessage(transcript);
+            };
+          } else {
+            this.micBtn.disabled = true;
+          }
+        }
+
+        startVoiceInput() {
+          if (this.recognition) {
+            this.recognition.start();
+          }
+        }
+
+        initChat() {
+          this.appendMessage(
+            "bot-message",
+            "What details do you need? (Loan Type, Eligibility, Interest Rates)"
+          );
+        }
+
+        sendMessage(message = null) {
+          if (!message) {
+            message = this.messageInput.value.trim();
+          }
+          if (!message) return;
+          this.appendMessage("user-message", message);
+          this.messageInput.value = "";
+          this.processMessage(message);
+        }
+
+        appendMessage(className, text) {
+          const msgDiv = document.createElement("div");
+          msgDiv.classList.add("message", className);
+          msgDiv.innerHTML = text;
+          this.chatMessages.appendChild(msgDiv);
+          this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }
+
+        async processMessage(userInput) {
+          if (this.state === "waiting_for_choice") {
+            this.appendMessage(
+              "bot-message",
+              `What do you need about ${userInput}? (Eligibility, Interest Rate, Loan Details)`
+            );
+            this.state = "waiting_for_details";
+          } else if (this.state === "waiting_for_details") {
+            await this.fetchLoanDetails(userInput);
+          }
+        }
+
+        async fetchLoanDetails(query) {
+          try {
+            const response = await fetch(
+              `https://api.example.com/loan?query=${encodeURIComponent(query)}`
+            );
+            const data = await response.json();
+            if (data.answer) {
+              this.appendMessage("bot-message", data.answer);
+            } else {
+              this.fetchGoogleSearch(query);
+            }
+          } catch (error) {
+            this.fetchGoogleSearch(query);
+          }
+        }
+
+        async fetchGoogleSearch(query) {
+          const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+            query
+          )}&hl=en`;
+          window.open(searchUrl, "_blank");
+          this.appendMessage(
+            "bot-message",
+            `I couldn't find an exact answer. Searching on Google...`
+          );
+        }
+      }
+      new LoanChatbot();
+    </script>
+  </body>
+</html>

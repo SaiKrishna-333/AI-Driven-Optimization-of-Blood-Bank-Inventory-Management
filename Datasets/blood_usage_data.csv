@@ -1,0 +1,6 @@
+This file contains raw blood bank data. Example:
+
+   date	     blood_type	demand	inventory	expiry_date
+2023-01-01	    A+	      50	   200	    2023-01-15
+2023-01-02	    B-	      30	   150	    2023-01-16
+2023-01-03	    O+	      40	   180	    2023-01-17

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Blood Bank Inventory Management</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <h1>Blood Bank Inventory Management</h1>
+    <iframe
+      src="{{ url_for('static', filename='chatbot.html') }}"
+      style="
+        width: 400px;
+        height: 600px;
+        border: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+      "
+    ></iframe>
+  </body>
+</html>
